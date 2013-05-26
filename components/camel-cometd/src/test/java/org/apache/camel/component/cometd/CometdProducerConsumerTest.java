@@ -21,6 +21,7 @@ import java.util.List;
 import org.apache.camel.Endpoint;
 import org.apache.camel.Exchange;
 import org.apache.camel.Message;
+import org.apache.camel.Processor;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.mock.MockEndpoint;
 import org.apache.camel.test.AvailablePortFinder;
@@ -31,6 +32,7 @@ import org.cometd.bayeux.server.ServerChannel;
 import org.cometd.bayeux.server.ServerMessage;
 import org.cometd.bayeux.server.ServerSession;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -112,6 +114,19 @@ public class CometdProducerConsumerTest extends CamelTestSupport {
         }
     }
 
+    @Test
+    @Ignore
+    public void testMemoryLeak(){
+//    	check as org.cometd.server.BayeuxServerImpl._sessions map grows till OOM
+        long i=0;
+    	while(true){   
+            template.sendBody("cometd://127.0.0.1:" + port + "/service/test/"+i++, "test");
+            try {
+				Thread.sleep(25);
+			} catch (InterruptedException e) {
+			}
+        }
+    }
 
     @Override
     @Before
@@ -133,6 +148,13 @@ public class CometdProducerConsumerTest extends CamelTestSupport {
                 component.setSecurityPolicy(createTestSecurityPolicy());
                 from("direct:input").to(uri);
                 from(uri).to("mock:test");
+                from("cometd://127.0.0.1:" + port + "/service/test/*").process(new Processor() {
+					
+					@Override
+					public void process(Exchange exchange) throws Exception {
+System.out.println("sssss");						
+					}
+				});
             }
         };
 

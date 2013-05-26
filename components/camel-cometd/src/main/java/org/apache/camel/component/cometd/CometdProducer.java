@@ -95,15 +95,21 @@ public class CometdProducer extends DefaultProducer implements CometdProducerCon
         public void process(final Exchange exchange) {
             String channelName = producer.getEndpoint().getPath();
             BayeuxServerImpl bayeux = producer.getBayeux();
-            ServerChannel channel = bayeux.getChannel(channelName);
-            ServerSession serverSession = getServerSession();
-
-            if (channel != null) {
-                logDelivery(exchange, channel);
-                ServerMessage.Mutable mutable = binding.createCometdMessage(channel, serverSession,
-                                                                            exchange.getIn());
-                channel.publish(serverSession, mutable);
-            }
+			ServerChannel channel = bayeux.getChannel(channelName);
+			ServerSession serverSession = getServerSession();
+			try {
+				if (channel != null) {
+					logDelivery(exchange, channel);
+					ServerMessage.Mutable mutable = binding.createCometdMessage(channel, serverSession,
+									exchange.getIn());
+					channel.publish(serverSession, mutable);
+				}
+			} finally {
+//				disconnect local sessions as these are sweeped by default... see org.cometd.server.BayeuxServerImpl.sweep()
+//				maybe add options for fields used in org.cometd.server.ServerSessionImpl.sweep(long) ?
+				if (serverSession.isLocalSession())
+					serverSession.disconnect();
+			}
         }
 
         private void logDelivery(Exchange exchange, ServerChannel channel) {
