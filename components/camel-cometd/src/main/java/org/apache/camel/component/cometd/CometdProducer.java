@@ -105,8 +105,8 @@ public class CometdProducer extends DefaultProducer implements CometdProducerCon
 					channel.publish(serverSession, mutable);
 				}
 			} finally {
-//				disconnect local sessions as these are sweeped by default... see org.cometd.server.BayeuxServerImpl.sweep()
-//				maybe add options for fields used in org.cometd.server.ServerSessionImpl.sweep(long) ?
+//				disconnect local sessions as these are not sweeped by default... see org.cometd.server.BayeuxServerImpl.sweep()
+//				maybe add config params for fields used in org.cometd.server.ServerSessionImpl.sweep(long) ?
 				if (serverSession.isLocalSession())
 					serverSession.disconnect();
 			}
